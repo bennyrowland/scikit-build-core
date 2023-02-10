@@ -150,3 +150,6 @@ tests/**/build/
 
 # VIM temp files
 *~
+
+# PyCharm IDE files
+.idea
