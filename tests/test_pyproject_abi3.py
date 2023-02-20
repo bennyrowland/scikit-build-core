@@ -51,6 +51,8 @@ def test_abi3_wheel(tmp_path, monkeypatch, virtualenv):
         else:
             assert so_file == "abi3_example.abi3.so"
 
+    print("going to try installing the wheel")
+
     virtualenv.install(wheel)
 
     print("successfully installed package, now going to run some code")
