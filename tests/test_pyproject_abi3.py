@@ -57,4 +57,5 @@ def test_abi3_wheel(tmp_path, monkeypatch, virtualenv):
     output = virtualenv.execute(
         "import abi3_example; print(abi3_example.square(2))",
     )
+    print("finished running")
     assert output.strip() == "4.0"
