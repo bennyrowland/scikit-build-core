@@ -53,6 +53,7 @@ def test_abi3_wheel(tmp_path, monkeypatch, virtualenv):
 
     virtualenv.install(wheel)
 
+    print("successfully installed package, now going to run some code")
     output = virtualenv.execute(
         "import abi3_example; print(abi3_example.square(2))",
     )
