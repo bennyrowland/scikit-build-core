@@ -29,7 +29,9 @@ def test_abi3_wheel(tmp_path, monkeypatch, virtualenv):
     if Path("build").is_dir():
         shutil.rmtree("build")
 
+    print("going to build the wheel now")
     out = build_wheel(str(dist))
+    print("finished building the wheel")
     (wheel,) = dist.glob("abi3_example-0.0.1-*.whl")
     assert wheel == dist / out
     assert "-cp37-abi3-" in out
