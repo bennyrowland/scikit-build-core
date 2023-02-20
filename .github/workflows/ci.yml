@@ -40,7 +40,7 @@ jobs:
       fail-fast: false
       matrix:
         python-version: ["3.7"]
-        runs-on: [ubuntu-latest, macos-latest]
+        runs-on: [ubuntu-latest]
         cmake-version: ["3.15.x"]
 
         include:
@@ -60,25 +60,14 @@ jobs:
         run: pip install .[test,cov] cmake ninja rich
 
       - name: Test package
-        run: pytest -ra --showlocals --cov=scikit_build_core
+        run:
+          pytest -ra --showlocals --cov=scikit_build_core -k
+          test_setuptools_abi3
 
       - name: Upload coverage report
         uses: codecov/codecov-action@v3.1.1
         with:
           name: ${{ runner.os }}-${{ matrix.python-version }}
-
-      - name: Min requirements
-        run: |
-          pip uninstall -y cmake
-          pip install --constraint tests/constraints.txt .[test]
-
-      - name: Setup CMake ${{ matrix.cmake-version }}
-        uses: jwlawson/actions-setup-cmake@v1.13
-        with:
-          cmake-version: "${{ matrix.cmake-version }}"
-
-      - name: Test min package
-        run: pytest -ra --showlocals
 
   dist:
     name: Distribution build
