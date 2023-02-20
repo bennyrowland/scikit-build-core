@@ -71,7 +71,7 @@ def build_sdist(
     with Path("pyproject.toml").open("rb") as f:
         pyproject = tomllib.load(f)
 
-    settings_reader = SettingsReader(pyproject, config_settings or {})
+    settings_reader = SettingsReader(Path("pyproject.toml"), config_settings or {})
     settings = settings_reader.settings
     setup_logging(settings.logging.level)
 

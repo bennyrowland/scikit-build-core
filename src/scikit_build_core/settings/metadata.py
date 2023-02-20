@@ -1,12 +1,10 @@
 from __future__ import annotations
 
-import warnings
 from pathlib import Path
 from typing import Any
 
 from pyproject_metadata import StandardMetadata
 
-from .._compat import importlib
 from ..settings.skbuild_model import ScikitBuildSettings
 
 __all__ = ["setuptools_scm_version", "fancy_pypi_readme", "get_standard_metadata"]
@@ -48,40 +46,40 @@ def fancy_pypi_readme(
 
 
 def get_standard_metadata(
-    pyproject_dict: dict[str, Any], settings: ScikitBuildSettings
+    pyproject_dict: dict[str, Any], _settings: ScikitBuildSettings
 ) -> StandardMetadata:
-    metadata = StandardMetadata.from_pyproject(pyproject_dict)
+    return StandardMetadata.from_pyproject(pyproject_dict)
 
     # handle any dynamic metadata
     # start by collecting all the scikit-build entrypoints
-    eps: importlib.metadata.EntryPoints = importlib.metadata.entry_points(
-        group="scikit_build.metadata"
-    )
-    cached_plugins = {}
-    for field, ep_name in settings.metadata.items():
-        if field not in metadata.dynamic:
-            msg = f"{field} is not in project.dynamic"
-            raise KeyError(msg)
-        if ep_name not in cached_plugins:
-            try:
-                ep = eps[ep_name]
-            except KeyError:
-                warnings.warn(
-                    f"could not find requested entrypoint {ep_name} for field {field}"
-                )
-                continue
-            else:
-                cached_plugins[ep_name] = ep.load()(pyproject_dict)
-        if field in cached_plugins[ep_name]:
-            # would be better to update the metadata directly but this is
-            # currently not supported by pyproject_metadata
-            # metadata.__setattr__(field, ep.load()(pyproject_path)
-            pyproject_dict["project"][field] = cached_plugins[ep_name][field]
-            pyproject_dict["project"]["dynamic"].remove(field)
-        else:
-            msg = f"{field} is not provided by plugin {ep_name}"
-            raise KeyError(msg)
-
-    # if pyproject-metadata supports updates, we won't need this line anymore
-    metadata = StandardMetadata.from_pyproject(pyproject_dict)
-    return metadata
+    # eps: importlib.metadata.EntryPoints = importlib.metadata.entry_points(
+    #     group="scikit_build.metadata"
+    # )
+    # cached_plugins = {}
+    # for field, ep_name in settings.metadata.items():
+    #     if field not in metadata.dynamic:
+    #         msg = f"{field} is not in project.dynamic"
+    #         raise KeyError(msg)
+    #     if ep_name not in cached_plugins:
+    #         try:
+    #             ep = eps[ep_name]
+    #         except KeyError:
+    #             warnings.warn(
+    #                 f"could not find requested entrypoint {ep_name} for field {field}"
+    #             )
+    #             continue
+    #         else:
+    #             cached_plugins[ep_name] = ep.load()(pyproject_dict)
+    #     if field in cached_plugins[ep_name]:
+    #         # would be better to update the metadata directly but this is
+    #         # currently not supported by pyproject_metadata
+    #         # metadata.__setattr__(field, ep.load()(pyproject_path)
+    #         pyproject_dict["project"][field] = cached_plugins[ep_name][field]
+    #         pyproject_dict["project"]["dynamic"].remove(field)
+    #     else:
+    #         msg = f"{field} is not provided by plugin {ep_name}"
+    #         raise KeyError(msg)
+    #
+    # # if pyproject-metadata supports updates, we won't need this line anymore
+    # metadata = StandardMetadata.from_pyproject(pyproject_dict)
+    # return metadata
