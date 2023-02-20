@@ -16,8 +16,6 @@ from .._logging import logger, rich_print
 from ..builder.builder import Builder
 from ..builder.wheel_tag import WheelTag
 from ..cmake import CMake, CMaker
-
-# from ..settings.metadata import get_standard_metadata
 from ..settings.skbuild_read_settings import SettingsReader
 from ._file_processor import each_unignored_file
 from ._init import setup_logging
@@ -84,17 +82,15 @@ def _build_wheel_impl(
     """
     Build a wheel or just prepare metadata (if wheel dir is None).
     """
-    pyproject_path = Path("pyproject.toml")
-    with pyproject_path.open("rb") as ft:
-        pyproject = tomllib.load(ft)
 
-    settings_reader = SettingsReader(pyproject, config_settings or {})
+    settings_reader = SettingsReader(Path("pyproject.toml"), config_settings or {})
     settings = settings_reader.settings
     setup_logging(settings.logging.level)
 
     settings_reader.validate_may_exit()
 
-    # metadata = get_standard_metadata(pyproject, settings)
+    with Path("pyproject.toml").open("rb") as ft:
+        pyproject = tomllib.load(ft)
     metadata = StandardMetadata.from_pyproject(pyproject)
 
     if metadata.version is None:

@@ -42,9 +42,7 @@ def is_known_platform(platforms: frozenset[str]) -> bool:
 def cmake_ninja_for_build_wheel(
     config_settings: Mapping[str, str | list[str]] | None = None
 ) -> list[str]:
-    settings = SettingsReader.from_file(
-        Path("pyproject.toml"), config_settings or {}
-    ).settings
+    settings = SettingsReader(Path("pyproject.toml"), config_settings or {}).settings
 
     packages = []
     cmake_min = Version(settings.cmake.minimum_version)
