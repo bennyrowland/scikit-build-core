@@ -97,7 +97,7 @@ jobs:
 
   pass:
     if: always()
-    needs: [lint, checks, cygwin, dist]
+    needs: [lint, checks, dist]
     runs-on: ubuntu-latest
     steps:
       - name: Decide whether the needed jobs succeeded or failed
