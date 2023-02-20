@@ -6,6 +6,7 @@ import sys
 import tempfile
 from collections.abc import Sequence
 from pathlib import Path
+from typing import Any
 
 from packaging.version import Version
 from pyproject_metadata import StandardMetadata
@@ -16,6 +17,7 @@ from .._logging import logger, rich_print
 from ..builder.builder import Builder
 from ..builder.wheel_tag import WheelTag
 from ..cmake import CMake, CMaker
+from ..settings.skbuild_model import ScikitBuildSettings
 from ..settings.skbuild_read_settings import SettingsReader
 from ._file_processor import each_unignored_file
 from ._init import setup_logging
@@ -74,6 +76,13 @@ class WheelImplReturn:
     mapping: dict[str, str] = dataclasses.field(default_factory=dict)
 
 
+def get_standard_metadata(
+    pyproject: dict[str, Any], settings: ScikitBuildSettings
+) -> StandardMetadata:
+    logger.info(str(settings.metadata))
+    return StandardMetadata.from_pyproject(pyproject)
+
+
 # small change
 def _build_wheel_impl(
     wheel_directory: str | None,
@@ -92,7 +101,7 @@ def _build_wheel_impl(
 
     with Path("pyproject.toml").open("rb") as ft:
         pyproject = tomllib.load(ft)
-    metadata = StandardMetadata.from_pyproject(pyproject)
+    metadata = get_standard_metadata(pyproject, settings)
 
     if metadata.version is None:
         msg = "project.version is not statically specified, must be present currently"
