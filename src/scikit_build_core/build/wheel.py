@@ -4,18 +4,21 @@ import dataclasses
 import shutil
 import sys
 import tempfile
+import warnings
 from collections.abc import Sequence
 from pathlib import Path
+from typing import Any
 
 from packaging.version import Version
 from pyproject_metadata import StandardMetadata
 
 from .. import __version__
-from .._compat import tomllib
+from .._compat import importlib, tomllib
 from .._logging import logger, rich_print
 from ..builder.builder import Builder
 from ..builder.wheel_tag import WheelTag
 from ..cmake import CMake, CMaker
+from ..settings.skbuild_model import ScikitBuildSettings
 from ..settings.skbuild_read_settings import SettingsReader
 from ._file_processor import each_unignored_file
 from ._init import setup_logging
@@ -74,6 +77,48 @@ class WheelImplReturn:
     mapping: dict[str, str] = dataclasses.field(default_factory=dict)
 
 
+def get_standard_metadata(
+    pyproject_dict: dict[str, Any], settings: ScikitBuildSettings
+) -> StandardMetadata:
+    logger.info(str(settings.metadata))
+    metadata = StandardMetadata.from_pyproject(pyproject_dict)
+
+    # handle any dynamic metadata
+    # start by collecting all the scikit-build entrypoints
+    eps: importlib.metadata.EntryPoints = importlib.metadata.entry_points(
+        group="scikit_build.metadata"
+    )
+    cached_plugins = {}
+    for field, ep_name in settings.metadata.items():
+        if field not in metadata.dynamic:
+            msg = f"{field} is not in project.dynamic"
+            raise KeyError(msg)
+        if ep_name not in cached_plugins:
+            try:
+                ep = eps[ep_name]
+            except KeyError:
+                warnings.warn(
+                    f"could not find requested entrypoint {ep_name} for field {field}"
+                )
+                continue
+            else:
+                cached_plugins[ep_name] = ep.load()(pyproject_dict)
+        if field in cached_plugins[ep_name]:
+            # would be better to update the metadata directly but this is
+            # currently not supported by pyproject_metadata
+            # metadata.__setattr__(field, ep.load()(pyproject_path)
+            pyproject_dict["project"][field] = cached_plugins[ep_name][field]
+            pyproject_dict["project"]["dynamic"].remove(field)
+        else:
+            msg = f"{field} is not provided by plugin {ep_name}"
+            raise KeyError(msg)
+
+    # if pyproject-metadata supports updates, we won't need this line anymore
+    metadata = StandardMetadata.from_pyproject(pyproject_dict)
+    return metadata
+
+
+# small change
 def _build_wheel_impl(
     wheel_directory: str | None,
     config_settings: dict[str, list[str] | str] | None = None,
@@ -91,7 +136,7 @@ def _build_wheel_impl(
 
     with Path("pyproject.toml").open("rb") as ft:
         pyproject = tomllib.load(ft)
-    metadata = StandardMetadata.from_pyproject(pyproject)
+    metadata = get_standard_metadata(pyproject, settings)
 
     if metadata.version is None:
         msg = "project.version is not statically specified, must be present currently"
